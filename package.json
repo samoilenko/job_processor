@@ -1,0 +1,19 @@
+{
+  "type": "module",
+  "name": "cpp_jobs",
+  "version": "1.0.0",
+  "main": "src/index.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "@types/node": "^22.15.29",
+    "tsx": "^4.19.4"
+  },
+  "dependencies": {
+    "uuid": "^11.1.0"
+  }
+}
