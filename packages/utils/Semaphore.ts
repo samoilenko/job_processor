@@ -1,11 +1,8 @@
-import EventEmitter from "events";
-
-export default class Semaphore extends EventEmitter {
+export default class Semaphore {
     #counter: number;
+    #queue: (() => void)[] = [];
 
     constructor(counter?: number) {
-        super();
-
         this.#counter = counter ?? 10;
     }
 
@@ -16,7 +13,7 @@ export default class Semaphore extends EventEmitter {
         }
 
         await new Promise<void>(resolve => {
-            this.once('returned', () => {
+            this.#queue.push(() => {
                 this.#counter--;
                 resolve();
             });
@@ -25,6 +22,10 @@ export default class Semaphore extends EventEmitter {
 
     return() {
         this.#counter++;
-        this.emit('returned');
+
+        if (this.#queue.length > 0) {
+            const resolve = this.#queue.shift();
+            resolve?.();
+        }
     }
 }
