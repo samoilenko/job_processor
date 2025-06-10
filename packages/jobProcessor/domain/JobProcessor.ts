@@ -6,7 +6,7 @@ export default class JobProcessor {
     #inbox: Inbox;
     #outbox: IOutBox;
     #semaphore: Semaphore;
-    #logger;
+    #logger: IJobProcessorLogger;
     #runner: IJobRunner;
     #jobService: IJobService;
 
