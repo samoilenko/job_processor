@@ -1,4 +1,3 @@
-import EventEmitter from "events";
 import { IStatisticLogger } from "../../domain/statisticTypes";
 import JobService from "../../../job/domain/Service";
 import Inbox from "../Inbox";
