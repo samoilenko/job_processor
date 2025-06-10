@@ -20,6 +20,7 @@ import StatisticConsumer from '../packages/statistic/infrastructure/StatisticCon
 import StatisticService from '../packages/statistic/domain/StatisticService.ts'
 import JobNameLength from '../packages/statistic/infrastructure/workers/JobNameLength.ts';
 import ArgumentsCount from '../packages/statistic/infrastructure/workers/ArgumentsCount.ts';
+import AverageTimeExecution from '../packages/statistic/infrastructure/workers/AverageTimeExecution.ts';
 
 const queue = new EventEmitter();
 
@@ -64,6 +65,15 @@ const argumentsCountOutbox = new StatisticOutbox(queue, consoleLogger);
 const argumentsCountInbox = new StatisticInbox();
 const argumentsCount = new ArgumentsCount(consoleLogger, jobService, argumentsCountInbox, argumentsCountOutbox);
 
+const averageTimeExecutionOutbox = new StatisticOutbox(queue, consoleLogger);
+const averageTimeExecutionInbox = new StatisticInbox();
+const averageTimeExecution = new AverageTimeExecution({
+    logger: consoleLogger,
+    jobService,
+    inbox: averageTimeExecutionInbox,
+    outbox: averageTimeExecutionOutbox
+});
+
 const statisticInbox = new StatisticInbox();
 const statisticService = new StatisticService();
 const statisticConsumer = new StatisticConsumer(statisticInbox, statisticService);
@@ -90,6 +100,10 @@ const container = {
     argumentsCount,
     argumentsCountInbox,
     argumentsCountOutbox,
+
+    averageTimeExecutionOutbox,
+    averageTimeExecutionInbox,
+    averageTimeExecution,
 
     statisticService,
     statisticConsumer,
