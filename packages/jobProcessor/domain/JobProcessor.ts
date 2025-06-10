@@ -41,19 +41,21 @@ export default class JobProcessor {
             throw new Error(`Job #${jobId} not found`);
         }
 
+        const startTime = Date.now();
         try {
             const response = await this.#runner.run(job.name, job.args);
+            const executionTime = Date.now() - startTime;
             if (response == 0) {
-                if (!this.#outbox.add('jobSuccessed', { id: job.id })) {
+                if (!this.#outbox.add('jobSuccessed', { id: job.id, executionTime })) {
                     this.#logger.error('jobSuccessed has no subscribers');
                 }
             } else if (response === 1) {
-                if (!this.#outbox.add('jobFailed', { id: job.id })) {
+                if (!this.#outbox.add('jobFailed', { id: job.id, executionTime })) {
                     this.#logger.error('jobFailed has no subscribers');
                 }
             }
         } catch (e) {
-            if (!this.#outbox.add('jobFailed', { id: job.id })) {
+            if (!this.#outbox.add('jobFailed', { id: job.id, executionTime: Date.now() - startTime })) {
                 this.#logger.error('jobFailed has no subscribers');
             }
 
