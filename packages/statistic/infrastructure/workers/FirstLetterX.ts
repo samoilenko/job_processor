@@ -5,7 +5,7 @@ import Inbox from "../Inbox";
 import Semaphore from "../../../utils/Semaphore"
 import Outbox from "../Outbox";
 
-const meetCriteria = (name: string): boolean => name.startsWith('X');
+const meetsCriteria = (name: string): boolean => name.startsWith('X');
 
 export default class FirstLetterX {
     #logger: IStatisticLogger
@@ -46,7 +46,7 @@ export default class FirstLetterX {
                 return;
             }
             this.#totalJobs++;
-            if (meetCriteria(job.name)) {
+            if (meetsCriteria(job.name)) {
                 this.#matchCount++;
             }
         }
@@ -59,7 +59,7 @@ export default class FirstLetterX {
             }
 
             this.#succeed++
-            if (meetCriteria(job.name)) {
+            if (meetsCriteria(job.name)) {
                 this.#successMatchCount++;
             }
         }

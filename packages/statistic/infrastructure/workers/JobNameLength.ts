@@ -5,7 +5,7 @@ import Inbox from "../Inbox";
 import Semaphore from "../../../utils/Semaphore"
 import Outbox from "../Outbox";
 
-const meetCriteria = (name: string, length: number): boolean => name.length > length;
+const meetsCriteria = (name: string, length: number): boolean => name.length > length;
 
 export default class JobNameLength {
     #logger: IStatisticLogger
@@ -48,7 +48,7 @@ export default class JobNameLength {
                 return;
             }
             this.#totalJobs++
-            if (meetCriteria(job.name, this.#desiredNameLength)) {
+            if (meetsCriteria(job.name, this.#desiredNameLength)) {
                 this.#matchCount++;
             }
         }
@@ -61,7 +61,7 @@ export default class JobNameLength {
             }
 
             this.#succeed++
-            if (meetCriteria(job.name, this.#desiredNameLength)) {
+            if (meetsCriteria(job.name, this.#desiredNameLength)) {
                 this.#successMatchCount++;
             }
         }
