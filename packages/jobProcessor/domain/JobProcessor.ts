@@ -43,7 +43,6 @@ export default class JobProcessor {
 
         try {
             const response = await this.#runner.run(job.name, job.args);
-            // also we can use outbox
             if (response == 0) {
                 if (!this.#outbox.add('jobSuccessed', { id: job.id })) {
                     this.#logger.error('jobSuccessed has no subscribers');
