@@ -23,7 +23,7 @@ export default class JobRunner implements IJobRunner {
                 } else if (code === 1) {
                     resolve(1)
                 } else {
-                    reject(new Error(`Unknown exist code: ${code}`))
+                    reject(new Error(`Unknown exit code: ${code}`))
                 }
             });
         });
