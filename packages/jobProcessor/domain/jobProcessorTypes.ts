@@ -1,5 +1,7 @@
 export interface IJobProcessorLogger {
     error(...args): void
+    info(...args): void
+    debug(...args): void
 }
 
 export interface IJobRunner {
