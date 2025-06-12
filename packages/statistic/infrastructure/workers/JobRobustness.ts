@@ -68,7 +68,7 @@ export default class JobRobustness {
             completed: this.#completedJobs,
             failed: this.#failedJobs,
             crashed: this.#crashedJobs,
-            percent: `${percent}%`,
+            percent: `${percent}% of crashed`,
             status: this.#getStatus(percent),
         });
     }
@@ -86,7 +86,7 @@ export default class JobRobustness {
             return 'Are you kidding, everything is on fire';
         }
 
-        return 'fix something to increase statistic...';
+        return 'Fix something to increase statistic...';
     }
 
     #calculatedPercent(): number {
