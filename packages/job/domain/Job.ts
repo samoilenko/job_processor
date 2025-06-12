@@ -1,34 +1,27 @@
 import { v4 } from 'uuid'
 import { JobDTO } from './jodTypes';
 
+export enum JobStatus {
+    SUCCESS = 'succeed',
+    FAILED = 'failed',
+    CRASHED = 'crashed',
+    RETRIED = 'retried',
+}
+
+const QUEUED = 'queued'
+
 export default class Job {
     id: string;
     name: string;
     arguments: string[];
-    status: string;
+    status: JobStatus | typeof QUEUED;
 
     constructor() {
         this.id = v4().replace(/-/g, '').slice(0, 10);
     }
 
     queued() {
-        this.status = "queued";
-    }
-
-    success() {
-        this.status = "completed";
-    }
-
-    failed() {
-        this.status = "failed";
-    }
-
-    retried() {
-        this.status = "retried";
-    }
-
-    crashed() {
-        this.status = "crashed";
+        this.status = QUEUED;
     }
 
     toDTO(): JobDTO {

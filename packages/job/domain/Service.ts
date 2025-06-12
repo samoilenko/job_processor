@@ -1,14 +1,10 @@
-import Job from "./Job.ts";
+import Job, { JobStatus } from "./Job.ts";
 import jobVO from "./JobValueObject.ts";
 import JobRepository from "./Repository.ts";
 import { IJobLogger, IJobOutBox, JobDTO, IJobInBox } from "./jodTypes.ts";
 
-export enum JobStatus {
-    SUCCESS = 'succeed',
-    FAILED = 'failed',
-    CRASHED = 'crashed',
-    RETRIED = 'retried',
-}
+const isValidStatus = (status: unknown): boolean => typeof status === 'string' &&
+    (Object.values(JobStatus) as string[]).includes(status);
 
 export default class JobService {
     #repository: JobRepository
@@ -50,24 +46,17 @@ export default class JobService {
         return list.map(job => job.toDTO());
     }
 
-    async changeStatus(id: string, status: string) {
+    async changeStatus(id: string, status: JobStatus) {
         const job = await this.#repository.get(id);
         if (!job) {
             throw new Error(`${id} not found`);
         }
 
-        if (status === JobStatus.FAILED) {
-            job.failed();
-        } else if (status === JobStatus.SUCCESS) {
-            job.success();
-        } else if (status === JobStatus.CRASHED) {
-            job.crashed();
-        } else if (status === JobStatus.RETRIED) {
-            job.retried();
-        } else {
+        if (!isValidStatus(status)) {
             throw new Error(`Unknown status: ${status}`);
         }
 
+        job.status = status;
         await this.#repository.save(job);
     }
 }

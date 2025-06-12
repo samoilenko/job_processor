@@ -1,17 +1,17 @@
 import Semaphore from "../../utils/Semaphore";
 import { IJobInBox, IJobLogger } from "../domain/jodTypes";
 import JobService from "../domain/Service";
-
+import { JobStatus } from "../domain/Job";
 
 const getJobStatusByEventType = (eventType: string) => {
     if (eventType === 'jobFailed') {
-        return 'failed';
+        return JobStatus.FAILED;
     } else if (eventType === 'jobSuccessed') {
-        return 'succeed';
+        return JobStatus.SUCCESS;
     } else if (eventType === 'jobRetried') {
-        return 'retried';
+        return JobStatus.RETRIED;
     } else if (eventType === 'jobCrashed') {
-        return 'crashed';
+        return JobStatus.CRASHED;
     }
 
     throw new Error(`Unsupported event type: ${eventType}`);
