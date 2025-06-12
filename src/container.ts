@@ -18,7 +18,6 @@ import StatisticInbox from '../packages/statistic/infrastructure/Inbox.ts'
 import StatisticOutbox from '../packages/statistic/infrastructure/Outbox.ts'
 import StatisticConsumer from '../packages/statistic/infrastructure/StatisticConsumer.ts'
 import StatisticService from '../packages/statistic/domain/StatisticService.ts'
-import JobNameLength from '../packages/statistic/infrastructure/workers/JobNameLength.ts';
 import VulnerabilitiesTracker from '../packages/statistic/infrastructure/workers/VulnerabilitiesTracker.ts';
 import AverageTimeExecution from '../packages/statistic/infrastructure/workers/AverageTimeExecution.ts';
 
@@ -55,15 +54,6 @@ const jobRobustnessOutbox = new StatisticOutbox(queue, consoleLogger);
 const jobRobustnessInbox = new StatisticInbox();
 const jobRobustness = new JobRobustness(consoleLogger, jobService, jobRobustnessInbox, jobRobustnessOutbox);
 
-const jobNameOutbox = new StatisticOutbox(queue, consoleLogger);
-const jobNameLengthInbox = new StatisticInbox();
-const jobNameLength = new JobNameLength({
-    logger: consoleLogger,
-    jobService,
-    inbox: jobNameLengthInbox,
-    outbox: jobNameOutbox,
-});
-
 const vulnerabilitiesTrackerOutbox = new StatisticOutbox(queue, consoleLogger);
 const vulnerabilitiesTrackerInbox = new StatisticInbox();
 const vulnerabilitiesTracker = new VulnerabilitiesTracker(consoleLogger, jobService, vulnerabilitiesTrackerInbox, vulnerabilitiesTrackerOutbox);
@@ -95,10 +85,6 @@ const container = {
     jobRobustness,
     jobRobustnessInbox,
     jobRobustnessOutbox,
-
-    jobNameLength,
-    jobNameLengthInbox,
-    jobNameOutbox,
 
     vulnerabilitiesTracker,
     vulnerabilitiesTrackerInbox,

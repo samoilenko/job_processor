@@ -8,16 +8,14 @@ process.on('unhandledRejection', err => {
 });
 
 const { consoleLogger, jobOutbox, queue, jobProcessorInbox, jobProcessor, jobEventConsumer, jobInbox } = container;
-const { jobRobustness, jobRobustnessInbox, statisticConsumer, statisticInbox, jobNameLength, jobNameLengthInbox } = container;
-const { vulnerabilitiesTracker, vulnerabilitiesTrackerInbox, jobNameOutbox, jobRobustnessOutbox, vulnerabilitiesTrackerOutbox } = container;
+const { jobRobustness, jobRobustnessInbox, statisticConsumer, statisticInbox, vulnerabilitiesTrackerOutbox } = container;
+const { vulnerabilitiesTracker, vulnerabilitiesTrackerInbox, jobRobustnessOutbox } = container;
 const { jobProcessorOutBox, averageTimeExecution, averageTimeExecutionInbox, averageTimeExecutionOutbox } = container;
 
 jobOutbox.run().catch(consoleLogger.error);
 jobProcessor.run().catch(consoleLogger.error);
 jobEventConsumer.operate().catch(consoleLogger.error);
 jobRobustness.run().catch(consoleLogger.error);
-jobNameLength.run().catch(consoleLogger.error);
-jobNameOutbox.run().catch(consoleLogger.error);
 jobProcessorOutBox.run().catch(consoleLogger.error);
 jobRobustnessOutbox.run().catch(consoleLogger.error);
 vulnerabilitiesTrackerOutbox.run().catch(consoleLogger.error);
@@ -43,9 +41,7 @@ process.on('SIGINT', () => {
     jobRobustnessInbox.stop();
     jobInbox.stop();
     statisticInbox.stop();
-    jobNameLengthInbox.stop();
     vulnerabilitiesTrackerInbox.stop();
-    jobNameOutbox.stop();
     jobRobustnessOutbox.stop();
     vulnerabilitiesTrackerOutbox.stop();
     jobProcessorOutBox.stop();

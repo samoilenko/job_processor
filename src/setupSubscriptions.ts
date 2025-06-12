@@ -12,7 +12,7 @@ export enum QUEUE_EVENTS {
 }
 
 const setupSubscription = (container: TContainer) => {
-    const { queue, jobProcessorInbox, jobInbox, jobRobustnessInbox, statisticInbox, jobNameLengthInbox } = container;
+    const { queue, jobProcessorInbox, jobInbox, jobRobustnessInbox, statisticInbox } = container;
     const { vulnerabilitiesTrackerInbox, averageTimeExecutionInbox } = container;
 
     queue.on(QUEUE_EVENTS.JOB_RUNNING, (payload) => {
@@ -31,7 +31,6 @@ const setupSubscription = (container: TContainer) => {
     queue.on(QUEUE_EVENTS.JOB_REGISTERED, (payload) => {
         jobProcessorInbox.add(QUEUE_EVENTS.JOB_REGISTERED, payload);
         statisticInbox.add(QUEUE_EVENTS.JOB_REGISTERED, payload);
-        jobNameLengthInbox.add(QUEUE_EVENTS.JOB_REGISTERED, payload);
         vulnerabilitiesTrackerInbox.add(QUEUE_EVENTS.JOB_REGISTERED, payload);
         averageTimeExecutionInbox.add(QUEUE_EVENTS.JOB_REGISTERED, payload);
     });
@@ -40,7 +39,6 @@ const setupSubscription = (container: TContainer) => {
         jobInbox.add(QUEUE_EVENTS.JOB_COMPLETED, payload);
         jobRobustnessInbox.add(QUEUE_EVENTS.JOB_COMPLETED, payload);
         statisticInbox.add(QUEUE_EVENTS.JOB_COMPLETED, payload);
-        jobNameLengthInbox.add(QUEUE_EVENTS.JOB_COMPLETED, payload);
         averageTimeExecutionInbox.add(QUEUE_EVENTS.JOB_COMPLETED, payload);
     });
     queue.on(QUEUE_EVENTS.JOB_FAILED, (payload) => {
