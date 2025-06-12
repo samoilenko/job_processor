@@ -91,9 +91,9 @@ export default class JobRobustness {
 
     #calculatedPercent(): number {
         if (!this.#crashedJobs)
-            return 0;
+            return 100;
 
-        const percent = (this.#completedJobs + this.#failedJobs) / this.#crashedJobs;
+        const percent = (this.#crashedJobs / (this.#completedJobs + this.#failedJobs)) * 100;
         return Math.round(percent * 100) / 100;
     }
 
