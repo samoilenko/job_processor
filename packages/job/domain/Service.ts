@@ -1,7 +1,7 @@
 import Job, { JobStatus } from "./Job.ts";
 import jobVO from "./JobValueObject.ts";
 import JobRepository from "./Repository.ts";
-import { IJobLogger, IJobOutBox, JobDTO, IJobInBox } from "./jodTypes.ts";
+import { IJobLogger, IJobOutBox, JobDTO } from "./jodTypes.ts";
 
 const isValidStatus = (status: unknown): boolean => typeof status === 'string' &&
     (Object.values(JobStatus) as string[]).includes(status);
