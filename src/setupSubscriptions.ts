@@ -2,7 +2,7 @@ import { TContainer } from "./container";
 
 export enum QUEUE_EVENTS {
     JOB_RETRIED = 'jobRetried',
-    JOB_CRUSHED = 'jobCrashed',
+    JOB_CRASHED = 'jobCrashed',
     JOB_COMPLETED = 'jobCompleted',
     JOB_FAILED = 'jobFailed',
     JOB_RUNNING = 'jobRunning',
@@ -23,8 +23,8 @@ const setupSubscription = (container: TContainer) => {
         jobInbox.add(QUEUE_EVENTS.JOB_RETRIED, payload);
     })
 
-    queue.on(QUEUE_EVENTS.JOB_CRUSHED, (payload) => {
-        jobInbox.add(QUEUE_EVENTS.JOB_CRUSHED, payload);
+    queue.on(QUEUE_EVENTS.JOB_CRASHED, (payload) => {
+        jobInbox.add(QUEUE_EVENTS.JOB_CRASHED, payload);
     })
 
     queue.on(QUEUE_EVENTS.JOB_REGISTERED, (payload) => {

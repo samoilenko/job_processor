@@ -11,7 +11,7 @@ type Statuses = typeof STATUS_SUCCESS | typeof STATUS_FAILED | typeof STATUS_CRA
 
 export type JobProcessorEvents = {
     JOB_RETRIED: string;
-    JOB_CRUSHED: string;
+    JOB_CRASHED: string;
     JOB_COMPLETED: string;
     JOB_FAILED: string;
     JOB_RUNNING: string;
@@ -28,7 +28,7 @@ type JobProcessorParams = {
 }
 
 const getSupportedEvents = (events: Record<string, string>): JobProcessorEvents => {
-    const requiredEvens = ['JOB_RETRIED', 'JOB_CRUSHED', 'JOB_COMPLETED', 'JOB_FAILED', 'JOB_RUNNING'];
+    const requiredEvens = ['JOB_RETRIED', 'JOB_CRASHED', 'JOB_COMPLETED', 'JOB_FAILED', 'JOB_RUNNING'];
     for (const eventName of requiredEvens) {
         if (!(eventName in events))
             throw new Error(`${eventName} is required`);
@@ -100,7 +100,7 @@ export default class JobProcessor {
             }
 
             if (i == this.#maxRetries) {
-                this.#addToOutbox(this.#eventNames.JOB_CRUSHED, { id: job.id, executionTime: Date.now() - startTime });
+                this.#addToOutbox(this.#eventNames.JOB_CRASHED, { id: job.id, executionTime: Date.now() - startTime });
             } else {
                 this.#addToOutbox(this.#eventNames.JOB_RETRIED, { id: job.id, executionTime: Date.now() - attemptStartTime });
                 this.#logger.debug(`Wait a bit (${this.#retryDelay} ms) before trying one more time...`);
