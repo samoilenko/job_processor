@@ -15,12 +15,20 @@ export default class Job {
         this.status = "queued";
     }
 
-    succeed() {
-        this.status = "succeed";
+    success() {
+        this.status = "completed";
     }
 
     failed() {
         this.status = "failed";
+    }
+
+    retried() {
+        this.status = "retried";
+    }
+
+    crashed() {
+        this.status = "crashed";
     }
 
     toDTO(): JobDTO {

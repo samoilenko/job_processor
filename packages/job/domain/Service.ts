@@ -3,6 +3,13 @@ import jobVO from "./JobValueObject.ts";
 import JobRepository from "./Repository.ts";
 import { IJobLogger, IJobOutBox, JobDTO, IJobInBox } from "./jodTypes.ts";
 
+export enum JobStatus {
+    SUCCESS = 'succeed',
+    FAILED = 'failed',
+    CRASHED = 'crashed',
+    RETRIED = 'retried',
+}
+
 export default class JobService {
     #repository: JobRepository
     #logger: IJobLogger;
@@ -49,10 +56,14 @@ export default class JobService {
             throw new Error(`${id} not found`);
         }
 
-        if (status === 'failed') {
+        if (status === JobStatus.FAILED) {
             job.failed();
-        } else if (status === 'succeed') {
-            job.succeed();
+        } else if (status === JobStatus.SUCCESS) {
+            job.success();
+        } else if (status === JobStatus.CRASHED) {
+            job.crashed();
+        } else if (status === JobStatus.RETRIED) {
+            job.retried();
         } else {
             throw new Error(`Unknown status: ${status}`);
         }

@@ -25,6 +25,13 @@ statisticConsumer.run().catch(consoleLogger.error);
 averageTimeExecution.run().catch(consoleLogger.error);
 averageTimeExecutionOutbox.run().catch(consoleLogger.error);
 
+queue.on('jobRetried', (payload) => {
+    jobInbox.add('jobRetried', payload);
+})
+
+queue.on('jobCrashed', (payload) => {
+    jobInbox.add('jobCrashed', payload);
+})
 
 queue.on('jobRegistered', (payload) => {
     jobProcessorInbox.add('jobRegistered', payload);

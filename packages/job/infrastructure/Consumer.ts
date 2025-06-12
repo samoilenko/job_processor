@@ -8,6 +8,10 @@ const getJobStatusByEventType = (eventType: string) => {
         return 'failed';
     } else if (eventType === 'jobSuccessed') {
         return 'succeed';
+    } else if (eventType === 'jobRetried') {
+        return 'retried';
+    } else if (eventType === 'jobCrashed') {
+        return 'crashed';
     }
 
     throw new Error(`Unsupported event type: ${eventType}`);
