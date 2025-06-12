@@ -3,7 +3,7 @@
 echo "Running simulated C++ job..."
 sleep 1
 
-random=$((RANDOM % 3))
+random=$((RANDOM % 5))
 
 if [[ $random -eq 0 ]]; then
     sleep "0.0$((30 + RANDOM % 41))"
