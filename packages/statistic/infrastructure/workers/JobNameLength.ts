@@ -44,7 +44,7 @@ export default class JobNameLength {
         if (event.type === QUEUE_EVENTS.JOB_REGISTERED) {
             const job = await this.#getJob(event.payload.id as string);
             if (!job) {
-                this.#logger.error(`Job not found`, event);
+                this.#logger.error(`${this.constructor.name}:\t Job not found`, event);
                 return;
             }
             this.#totalJobs++
@@ -56,7 +56,7 @@ export default class JobNameLength {
         if (event.type === QUEUE_EVENTS.JOB_COMPLETED) {
             const job = await this.#getJob(event.payload.id as string);
             if (!job) {
-                this.#logger.error(`Job not found`, event);
+                this.#logger.error(`${this.constructor.name}:\t Job not found`, event);
                 return;
             }
 
@@ -76,13 +76,13 @@ export default class JobNameLength {
 
     async #getJob(jobId: string) {
         if (!jobId) {
-            this.#logger.error('Job id is empty');
+            this.#logger.error(`${this.constructor.name}:\t Job id is empty`);
             return;
         }
 
         const job = this.#jobService.get(jobId);
         if (!job) {
-            this.#logger.error(`Job '${jobId} not found'`);
+            this.#logger.error(`${this.constructor.name}:\t Job '${jobId} not found'`);
             return;
         }
 

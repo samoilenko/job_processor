@@ -5,19 +5,17 @@ import Semaphore from "../../../utils/Semaphore"
 import Outbox from "../Outbox";
 import { QUEUE_EVENTS } from '../config';
 
-const meetsCriteria = (name: string): boolean => name.startsWith('X');
+const meetsCriteria = (args: string[]): boolean => args.some((arg: string) => arg.indexOf('secret') !== -1);
 
-export default class FirstLetterX {
+export default class VulnerabilitiesTracker {
     #logger: IStatisticLogger
     #jobService: JobService
     #inbox: Inbox
-    #semaphore: Semaphore
     #outbox: Outbox
+    #semaphore: Semaphore
 
     #totalJobs: number = 0;
-    #succeed: number = 0;
-    #matchCount: number = 0;
-    #successMatchCount: number = 0;
+    #jobsWithVulnerabilities: number = 0;
 
     constructor(logger: IStatisticLogger, jobService: JobService, inbox: Inbox, outbox: Outbox) {
         this.#logger = logger;
@@ -39,48 +37,38 @@ export default class FirstLetterX {
     }
 
     async #handle(event: { type: string, payload: Record<string, unknown> }) {
-        if (event.type === QUEUE_EVENTS.JOB_REGISTERED) {
-            const job = await this.#getJob(event.payload.id as string);
-            if (!job) {
-                this.#logger.error(`Job not found`, event);
-                return;
-            }
-            this.#totalJobs++;
-            if (meetsCriteria(job.name)) {
-                this.#matchCount++;
-            }
+        if (event.type !== QUEUE_EVENTS.JOB_REGISTERED) {
+            return;
         }
 
-        if (event.type === QUEUE_EVENTS.JOB_COMPLETED) {
-            const job = await this.#getJob(event.payload.id as string);
-            if (!job) {
-                this.#logger.error(`Job not found`, event);
-                return;
-            }
-
-            this.#succeed++
-            if (meetsCriteria(job.name)) {
-                this.#successMatchCount++;
-            }
+        const job = await this.#getJob(event.payload.id as string);
+        if (!job) {
+            this.#logger.error(`${this.constructor.name}:\t Job not found`, event);
+            return;
+        }
+        this.#logger.debug(`${this.constructor.name}:\t get an event \t ${event.type} jobId: \t ${job.id}`);
+        this.#totalJobs++
+        if (meetsCriteria(job.arguments)) {
+            this.#jobsWithVulnerabilities++
         }
 
         this.#outbox.add(QUEUE_EVENTS.STATISTIC_CALCULATED, {
             id: this.constructor.name,
-            pattern: "first letter x",
-            matchCount: this.#matchCount,
-            successRate: Math.round((this.#successMatchCount / this.#totalJobs) * 100) / 100,
+            pattern: 'Jobs with vulnerabilities',
+            totalCount: this.#totalJobs,
+            withVulnerabilities: this.#jobsWithVulnerabilities,
         });
     }
 
     async #getJob(jobId: string) {
         if (!jobId) {
-            this.#logger.error('Job id is empty');
+            this.#logger.error(`${this.constructor.name}:\t Job id is empty`);
             return;
         }
 
         const job = this.#jobService.get(jobId);
         if (!job) {
-            this.#logger.error(`Job '${jobId} not found'`);
+            this.#logger.error(`${this.constructor.name}:\t Job '${jobId} not found'`);
             return;
         }
 

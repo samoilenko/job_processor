@@ -13,13 +13,13 @@ import JobProcessorOutBox from '../packages/jobProcessor/infrastructure/Outbox.t
 import JobRunner from '../packages/jobProcessor/infrastructure/JobRunner.ts'
 import JobProcessorService from '../packages/jobProcessor/infrastructure/JobProcessorService.ts'
 
-import FirstLetterX from '../packages/statistic/infrastructure/workers/FirstLetterX.ts'
+import JobRobustness from '../packages/statistic/infrastructure/workers/JobRobustness.ts'
 import StatisticInbox from '../packages/statistic/infrastructure/Inbox.ts'
 import StatisticOutbox from '../packages/statistic/infrastructure/Outbox.ts'
 import StatisticConsumer from '../packages/statistic/infrastructure/StatisticConsumer.ts'
 import StatisticService from '../packages/statistic/domain/StatisticService.ts'
 import JobNameLength from '../packages/statistic/infrastructure/workers/JobNameLength.ts';
-import ArgumentsCount from '../packages/statistic/infrastructure/workers/ArgumentsCount.ts';
+import VulnerabilitiesTracker from '../packages/statistic/infrastructure/workers/VulnerabilitiesTracker.ts';
 import AverageTimeExecution from '../packages/statistic/infrastructure/workers/AverageTimeExecution.ts';
 
 import { QUEUE_EVENTS } from './setupSubscriptions.ts';
@@ -41,7 +41,7 @@ const jobEventConsumer = new JobEventConsumer(jobInbox, jobService, consoleLogge
 
 const jobProcessorOutBox = new JobProcessorOutBox(queue, consoleLogger);
 const jobProcessorInbox = new JobProcessorInbox();
-const jobRunner = new JobRunner();
+const jobRunner = new JobRunner(consoleLogger);
 const jobProcessor = new JobProcessor({
     inbox: jobProcessorInbox,
     outbox: jobProcessorOutBox,
@@ -51,9 +51,9 @@ const jobProcessor = new JobProcessor({
     eventNames: QUEUE_EVENTS,
 });
 
-const firstLetterOutbox = new StatisticOutbox(queue, consoleLogger);
-const firstLetterXInbox = new StatisticInbox();
-const firstLetterX = new FirstLetterX(consoleLogger, jobService, firstLetterXInbox, firstLetterOutbox);
+const jobRobustnessOutbox = new StatisticOutbox(queue, consoleLogger);
+const jobRobustnessInbox = new StatisticInbox();
+const jobRobustness = new JobRobustness(consoleLogger, jobService, jobRobustnessInbox, jobRobustnessOutbox);
 
 const jobNameOutbox = new StatisticOutbox(queue, consoleLogger);
 const jobNameLengthInbox = new StatisticInbox();
@@ -64,9 +64,9 @@ const jobNameLength = new JobNameLength({
     outbox: jobNameOutbox,
 });
 
-const argumentsCountOutbox = new StatisticOutbox(queue, consoleLogger);
-const argumentsCountInbox = new StatisticInbox();
-const argumentsCount = new ArgumentsCount(consoleLogger, jobService, argumentsCountInbox, argumentsCountOutbox);
+const vulnerabilitiesTrackerOutbox = new StatisticOutbox(queue, consoleLogger);
+const vulnerabilitiesTrackerInbox = new StatisticInbox();
+const vulnerabilitiesTracker = new VulnerabilitiesTracker(consoleLogger, jobService, vulnerabilitiesTrackerInbox, vulnerabilitiesTrackerOutbox);
 
 const averageTimeExecutionOutbox = new StatisticOutbox(queue, consoleLogger);
 const averageTimeExecutionInbox = new StatisticInbox();
@@ -92,17 +92,17 @@ const container = {
     jobInbox,
     jobEventConsumer,
 
-    firstLetterX,
-    firstLetterXInbox,
-    firstLetterOutbox,
+    jobRobustness,
+    jobRobustnessInbox,
+    jobRobustnessOutbox,
 
     jobNameLength,
     jobNameLengthInbox,
     jobNameOutbox,
 
-    argumentsCount,
-    argumentsCountInbox,
-    argumentsCountOutbox,
+    vulnerabilitiesTracker,
+    vulnerabilitiesTrackerInbox,
+    vulnerabilitiesTrackerOutbox,
 
     averageTimeExecutionOutbox,
     averageTimeExecutionInbox,

@@ -8,20 +8,20 @@ process.on('unhandledRejection', err => {
 });
 
 const { consoleLogger, jobOutbox, queue, jobProcessorInbox, jobProcessor, jobEventConsumer, jobInbox } = container;
-const { firstLetterX, firstLetterXInbox, statisticConsumer, statisticInbox, jobNameLength, jobNameLengthInbox } = container;
-const { argumentsCount, argumentsCountInbox, jobNameOutbox, firstLetterOutbox, argumentsCountOutbox } = container;
+const { jobRobustness, jobRobustnessInbox, statisticConsumer, statisticInbox, jobNameLength, jobNameLengthInbox } = container;
+const { vulnerabilitiesTracker, vulnerabilitiesTrackerInbox, jobNameOutbox, jobRobustnessOutbox, vulnerabilitiesTrackerOutbox } = container;
 const { jobProcessorOutBox, averageTimeExecution, averageTimeExecutionInbox, averageTimeExecutionOutbox } = container;
 
 jobOutbox.run().catch(consoleLogger.error);
 jobProcessor.run().catch(consoleLogger.error);
 jobEventConsumer.operate().catch(consoleLogger.error);
-firstLetterX.run().catch(consoleLogger.error);
+jobRobustness.run().catch(consoleLogger.error);
 jobNameLength.run().catch(consoleLogger.error);
 jobNameOutbox.run().catch(consoleLogger.error);
 jobProcessorOutBox.run().catch(consoleLogger.error);
-firstLetterOutbox.run().catch(consoleLogger.error);
-argumentsCountOutbox.run().catch(consoleLogger.error);
-argumentsCount.run().catch(consoleLogger.error);
+jobRobustnessOutbox.run().catch(consoleLogger.error);
+vulnerabilitiesTrackerOutbox.run().catch(consoleLogger.error);
+vulnerabilitiesTracker.run().catch(consoleLogger.error);
 statisticConsumer.run().catch(consoleLogger.error);
 averageTimeExecution.run().catch(consoleLogger.error);
 averageTimeExecutionOutbox.run().catch(consoleLogger.error);
@@ -40,14 +40,14 @@ process.on('SIGINT', () => {
     console.log("Received SIGINT. Shutting down...");
     jobOutbox.stop();
     jobProcessorInbox.stop();
-    firstLetterXInbox.stop();
+    jobRobustnessInbox.stop();
     jobInbox.stop();
     statisticInbox.stop();
     jobNameLengthInbox.stop();
-    argumentsCountInbox.stop();
+    vulnerabilitiesTrackerInbox.stop();
     jobNameOutbox.stop();
-    firstLetterOutbox.stop();
-    argumentsCountOutbox.stop();
+    jobRobustnessOutbox.stop();
+    vulnerabilitiesTrackerOutbox.stop();
     jobProcessorOutBox.stop();
     averageTimeExecutionOutbox.stop();
     averageTimeExecutionInbox.stop();
