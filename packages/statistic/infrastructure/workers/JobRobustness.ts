@@ -72,15 +72,15 @@ export default class JobRobustness {
     }
 
     #getStatus(percent: number): string {
-        if (percent > 90) {
+        if (percent < 10) {
             return 'You are doing great';
         }
 
-        if (percent > 70) {
+        if (percent < 30) {
             return 'Not bad, but you can do better'
         }
 
-        if (percent < 40) {
+        if (percent > 60) {
             return 'Are you kidding, everything is on fire';
         }
 
@@ -89,7 +89,7 @@ export default class JobRobustness {
 
     #calculatedPercent(): number {
         if (!this.#crashedJobs)
-            return 100;
+            return 0;
 
         const percent = (this.#crashedJobs / (this.#completedJobs + this.#failedJobs)) * 100;
         return Math.round(percent * 100) / 100;
