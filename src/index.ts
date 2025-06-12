@@ -7,7 +7,7 @@ process.on('unhandledRejection', err => {
     console.error(err);
 });
 
-const { consoleLogger, jobOutbox, queue, jobProcessorInbox, jobProcessor, jobEventConsumer, jobInbox } = container;
+const { consoleLogger, jobOutbox, jobProcessorInbox, jobProcessor, jobEventConsumer, jobInbox } = container;
 const { jobRobustness, jobRobustnessInbox, statisticConsumer, statisticInbox, vulnerabilitiesTrackerOutbox } = container;
 const { vulnerabilitiesTracker, vulnerabilitiesTrackerInbox, jobRobustnessOutbox } = container;
 const { jobProcessorOutBox, averageTimeExecution, averageTimeExecutionInbox, averageTimeExecutionOutbox } = container;
