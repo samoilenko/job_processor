@@ -1,7 +1,22 @@
 import Inbox from "../infrastructure/Inbox";
-import { IJobProcessorLogger, IJobRunner, IJobService, IOutBox } from "./jobProcessorTypes";
+import { IJobProcessorLogger, IJobRunner, IJobService, IOutBox, Job } from "./jobProcessorTypes";
 import Semaphore from "../../utils/Semaphore"
+import { setTimeout } from 'node:timers/promises';
 
+const STATUS_SUCCESS = 0;
+const STATUS_FAILED = 1;
+const STATUS_CRASHED = 2;
+
+type Statuses = typeof STATUS_SUCCESS | typeof STATUS_FAILED | typeof STATUS_CRASHED;
+
+type JobProcessorParams = {
+    inbox: Inbox,
+    outbox: IOutBox,
+    logger: IJobProcessorLogger,
+    runner: IJobRunner,
+    jobService: IJobService,
+    maxRetries?: number,
+}
 export default class JobProcessor {
     #inbox: Inbox;
     #outbox: IOutBox;
@@ -9,14 +24,17 @@ export default class JobProcessor {
     #logger: IJobProcessorLogger;
     #runner: IJobRunner;
     #jobService: IJobService;
+    #maxRetries: number;
+    #retryDelay: number = 3000; // ms
 
-    constructor(params: { inbox: Inbox, outbox: IOutBox, logger: IJobProcessorLogger, runner: IJobRunner, jobService: IJobService }) {
+    constructor(params: JobProcessorParams) {
         this.#inbox = params.inbox;
         this.#outbox = params.outbox;
         this.#semaphore = new Semaphore();
         this.#logger = params.logger;
         this.#runner = params.runner;
         this.#jobService = params.jobService;
+        this.#maxRetries = params.maxRetries ?? 2;
     }
 
     async run() {
@@ -42,24 +60,55 @@ export default class JobProcessor {
         }
 
         const startTime = Date.now();
-        try {
-            const response = await this.#runner.run(job.name, job.args);
-            const executionTime = Date.now() - startTime;
-            if (response == 0) {
-                if (!this.#outbox.add('jobSuccessed', { id: job.id, executionTime })) {
-                    this.#logger.error('jobSuccessed has no subscribers');
-                }
-            } else if (response === 1) {
-                if (!this.#outbox.add('jobFailed', { id: job.id, executionTime })) {
-                    this.#logger.error('jobFailed has no subscribers');
-                }
-            }
-        } catch (e) {
-            if (!this.#outbox.add('jobFailed', { id: job.id, executionTime: Date.now() - startTime })) {
-                this.#logger.error('jobFailed has no subscribers');
+
+        // one call is required, others are retries
+        for (let i = 0; i <= this.#maxRetries; i++) {
+            const attemptStartTime = Date.now();
+            this.#logger.info(`Job ${jobId}, attempt ${i + 1}`);
+
+            const response = await this.#runJob(job);
+            const executionTime = Date.now() - attemptStartTime;
+            if (response == STATUS_SUCCESS) {
+                this.#addToOutbox('jobSuccessed', { id: job.id, executionTime });
+                return;
+            } else if (response === STATUS_FAILED) {
+                this.#addToOutbox('jobFailed', { id: job.id, executionTime });
+                return;
             }
 
-            throw e;
+            if (i == this.#maxRetries) {
+                this.#addToOutbox('jobCrashed', { id: job.id, executionTime: Date.now() - startTime });
+            } else {
+                this.#addToOutbox('jobRetried', { id: job.id, executionTime: Date.now() - attemptStartTime });
+                this.#logger.debug(`Wait a bit (${this.#retryDelay} ms) before trying one more time...`);
+                await setTimeout(this.#retryDelay);
+            }
+        }
+    }
+
+    async #runJob(job: Job): Promise<Statuses> {
+        try {
+            const response = await this.#runner.run(job.name, job.args);
+            if (response === 0) {
+                return STATUS_SUCCESS;
+            } else if (response === 1) {
+                return STATUS_FAILED;
+            }
+
+            if (response !== STATUS_CRASHED) {
+                this.#logger.error(`unexpected status: ${response}`, job);
+            }
+
+            return STATUS_CRASHED;
+        } catch (e: unknown) {
+            this.#logger.error(e, job);
+            return STATUS_CRASHED;
+        }
+    }
+
+    #addToOutbox(name: string, payload: { id: string, executionTime: number }) {
+        if (!this.#outbox.add(name, payload)) {
+            this.#logger.error(`${name} has no subscribers`);
         }
     }
 }
