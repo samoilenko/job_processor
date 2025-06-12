@@ -5,8 +5,6 @@ import Semaphore from "../../../utils/Semaphore"
 import Outbox from "../Outbox";
 import { QUEUE_EVENTS } from '../config';
 
-const meetsCriteria = (name: string): boolean => name.startsWith('X');
-
 export default class JobRobustness {
     #logger: IStatisticLogger
     #jobService: JobService
