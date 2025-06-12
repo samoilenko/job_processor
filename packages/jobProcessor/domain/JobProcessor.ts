@@ -14,6 +14,7 @@ export type JobProcessorEvents = {
     JOB_CRUSHED: string;
     JOB_COMPLETED: string;
     JOB_FAILED: string;
+    JOB_RUNNING: string;
 }
 
 type JobProcessorParams = {
@@ -27,7 +28,7 @@ type JobProcessorParams = {
 }
 
 const getSupportedEvents = (events: Record<string, string>): JobProcessorEvents => {
-    const requiredEvens = ['JOB_RETRIED', 'JOB_CRUSHED', 'JOB_COMPLETED', 'JOB_FAILED'];
+    const requiredEvens = ['JOB_RETRIED', 'JOB_CRUSHED', 'JOB_COMPLETED', 'JOB_FAILED', 'JOB_RUNNING'];
     for (const eventName of requiredEvens) {
         if (!(eventName in events))
             throw new Error(`${eventName} is required`);
@@ -87,6 +88,7 @@ export default class JobProcessor {
             const attemptStartTime = Date.now();
             this.#logger.info(`Job ${jobId}, attempt ${i + 1}`);
 
+            this.#addToOutbox(this.#eventNames.JOB_RUNNING, { id: job.id });
             const response = await this.#runJob(job);
             const executionTime = Date.now() - attemptStartTime;
             if (response == STATUS_SUCCESS) {
@@ -127,7 +129,7 @@ export default class JobProcessor {
         }
     }
 
-    #addToOutbox(name: string, payload: { id: string, executionTime: number }) {
+    #addToOutbox(name: string, payload: { id: string, executionTime?: number }) {
         if (!this.#outbox.add(name, payload)) {
             this.#logger.error(`${name} has no subscribers`);
         }

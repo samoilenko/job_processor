@@ -11,6 +11,8 @@ const getJobStatusByEventType = (eventType: string) => {
         return JobStatus.COMPLETED;
     } else if (eventType === QUEUE_EVENTS.JOB_RETRIED) {
         return JobStatus.RETRIED;
+    } else if (eventType === QUEUE_EVENTS.JOB_RUNNING) {
+        return JobStatus.RUNNING;
     } else if (eventType === QUEUE_EVENTS.JOB_CRUSHED) {
         return JobStatus.CRASHED;
     }

@@ -6,6 +6,7 @@ export enum JobStatus {
     FAILED = 'failed',
     CRASHED = 'crashed',
     RETRIED = 'retried',
+    RUNNING = 'running',
 }
 
 const QUEUED = 'queued'

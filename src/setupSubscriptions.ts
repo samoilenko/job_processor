@@ -5,6 +5,7 @@ export enum QUEUE_EVENTS {
     JOB_CRUSHED = 'jobCrashed',
     JOB_COMPLETED = 'jobCompleted',
     JOB_FAILED = 'jobFailed',
+    JOB_RUNNING = 'jobRunning',
     JOB_REGISTERED = 'jobRegistered',
 
     STATISTIC_CALCULATED = 'statisticCalculated',
@@ -13,6 +14,10 @@ export enum QUEUE_EVENTS {
 const setupSubscription = (container: TContainer) => {
     const { queue, jobProcessorInbox, jobInbox, firstLetterXInbox, statisticInbox, jobNameLengthInbox } = container;
     const { argumentsCountInbox, averageTimeExecutionInbox } = container;
+
+    queue.on(QUEUE_EVENTS.JOB_RUNNING, (payload) => {
+        jobInbox.add(QUEUE_EVENTS.JOB_RUNNING, payload);
+    })
 
     queue.on(QUEUE_EVENTS.JOB_RETRIED, (payload) => {
         jobInbox.add(QUEUE_EVENTS.JOB_RETRIED, payload);
