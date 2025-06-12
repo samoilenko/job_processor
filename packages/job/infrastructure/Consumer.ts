@@ -2,15 +2,16 @@ import Semaphore from "../../utils/Semaphore";
 import { IJobInBox, IJobLogger } from "../domain/jodTypes";
 import JobService from "../domain/Service";
 import { JobStatus } from "../domain/Job";
+import { QUEUE_EVENTS } from './config'
 
 const getJobStatusByEventType = (eventType: string) => {
-    if (eventType === 'jobFailed') {
+    if (eventType === QUEUE_EVENTS.JOB_FAILED) {
         return JobStatus.FAILED;
-    } else if (eventType === 'jobSuccessed') {
-        return JobStatus.SUCCESS;
-    } else if (eventType === 'jobRetried') {
+    } else if (eventType === QUEUE_EVENTS.JOB_COMPLETED) {
+        return JobStatus.COMPLETED;
+    } else if (eventType === QUEUE_EVENTS.JOB_RETRIED) {
         return JobStatus.RETRIED;
-    } else if (eventType === 'jobCrashed') {
+    } else if (eventType === QUEUE_EVENTS.JOB_CRUSHED) {
         return JobStatus.CRASHED;
     }
 

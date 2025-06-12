@@ -9,6 +9,13 @@ const STATUS_CRASHED = 2;
 
 type Statuses = typeof STATUS_SUCCESS | typeof STATUS_FAILED | typeof STATUS_CRASHED;
 
+export type JobProcessorEvents = {
+    JOB_RETRIED: string;
+    JOB_CRUSHED: string;
+    JOB_COMPLETED: string;
+    JOB_FAILED: string;
+}
+
 type JobProcessorParams = {
     inbox: Inbox,
     outbox: IOutBox,
@@ -16,7 +23,19 @@ type JobProcessorParams = {
     runner: IJobRunner,
     jobService: IJobService,
     maxRetries?: number,
+    eventNames: JobProcessorEvents,
 }
+
+const getSupportedEvents = (events: Record<string, string>): JobProcessorEvents => {
+    const requiredEvens = ['JOB_RETRIED', 'JOB_CRUSHED', 'JOB_COMPLETED', 'JOB_FAILED'];
+    for (const eventName of requiredEvens) {
+        if (!(eventName in events))
+            throw new Error(`${eventName} is required`);
+    }
+
+    return events as JobProcessorEvents;
+};
+
 export default class JobProcessor {
     #inbox: Inbox;
     #outbox: IOutBox;
@@ -26,6 +45,7 @@ export default class JobProcessor {
     #jobService: IJobService;
     #maxRetries: number;
     #retryDelay: number = 3000; // ms
+    #eventNames: JobProcessorEvents;
 
     constructor(params: JobProcessorParams) {
         this.#inbox = params.inbox;
@@ -35,6 +55,7 @@ export default class JobProcessor {
         this.#runner = params.runner;
         this.#jobService = params.jobService;
         this.#maxRetries = params.maxRetries ?? 2;
+        this.#eventNames = getSupportedEvents(params.eventNames);
     }
 
     async run() {
@@ -69,17 +90,17 @@ export default class JobProcessor {
             const response = await this.#runJob(job);
             const executionTime = Date.now() - attemptStartTime;
             if (response == STATUS_SUCCESS) {
-                this.#addToOutbox('jobSuccessed', { id: job.id, executionTime });
+                this.#addToOutbox(this.#eventNames.JOB_COMPLETED, { id: job.id, executionTime });
                 return;
             } else if (response === STATUS_FAILED) {
-                this.#addToOutbox('jobFailed', { id: job.id, executionTime });
+                this.#addToOutbox(this.#eventNames.JOB_FAILED, { id: job.id, executionTime });
                 return;
             }
 
             if (i == this.#maxRetries) {
-                this.#addToOutbox('jobCrashed', { id: job.id, executionTime: Date.now() - startTime });
+                this.#addToOutbox(this.#eventNames.JOB_CRUSHED, { id: job.id, executionTime: Date.now() - startTime });
             } else {
-                this.#addToOutbox('jobRetried', { id: job.id, executionTime: Date.now() - attemptStartTime });
+                this.#addToOutbox(this.#eventNames.JOB_RETRIED, { id: job.id, executionTime: Date.now() - attemptStartTime });
                 this.#logger.debug(`Wait a bit (${this.#retryDelay} ms) before trying one more time...`);
                 await setTimeout(this.#retryDelay);
             }

@@ -3,6 +3,7 @@ import JobService from "../../../job/domain/Service";
 import Inbox from "../Inbox";
 import Semaphore from "../../../utils/Semaphore"
 import Outbox from "../Outbox";
+import { QUEUE_EVENTS } from '../config';
 
 const calculateAverageTimeExecution = (timeExecution: number, count: number): number => {
     return Math.round(timeExecution / count);
@@ -41,7 +42,7 @@ export default class AverageTimeExecution {
     }
 
     async #handle(event: { type: string, payload: Record<string, unknown> }) {
-        if (event.type === 'jobRegistered') {
+        if (event.type === QUEUE_EVENTS.JOB_REGISTERED) {
             const job = await this.#getJob(event.payload.id as string);
             if (!job) {
                 this.#logger.error(`Job not found`, event);
@@ -50,7 +51,7 @@ export default class AverageTimeExecution {
             this.#totalJobs++
         }
 
-        if (event.type === 'jobSuccessed') {
+        if (event.type === QUEUE_EVENTS.JOB_COMPLETED) {
             const job = await this.#getJob(event.payload.id as string);
             if (!job) {
                 this.#logger.error(`Job not found`, event);
@@ -67,7 +68,7 @@ export default class AverageTimeExecution {
             this.#succeed++
         }
 
-        if (event.type === 'jobFailed') {
+        if (event.type === QUEUE_EVENTS.JOB_FAILED) {
             const job = await this.#getJob(event.payload.id as string);
             if (!job) {
                 this.#logger.error(`Job not found`, event);
@@ -85,7 +86,7 @@ export default class AverageTimeExecution {
 
         const successAverageTime = calculateAverageTimeExecution(this.#successTotalExecutionTime, this.#succeed);
         const failedAverageTime = calculateAverageTimeExecution(this.#failedTotalExecutionTime, this.#succeed);
-        this.#outbox.add('statisticCalculated', {
+        this.#outbox.add(QUEUE_EVENTS.STATISTIC_CALCULATED, {
             id: this.constructor.name,
             pattern: 'Average time execution',
             successJobs: `${this.#succeed}/${this.#totalJobs} ${successAverageTime}ms`,

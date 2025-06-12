@@ -3,6 +3,7 @@ import JobService from "../../../job/domain/Service";
 import Inbox from "../Inbox";
 import Semaphore from "../../../utils/Semaphore"
 import Outbox from "../Outbox";
+import { QUEUE_EVENTS } from '../config';
 
 const meetsCriteria = (name: string, length: number): boolean => name.length > length;
 
@@ -40,7 +41,7 @@ export default class JobNameLength {
     }
 
     async #handle(event: { type: string, payload: Record<string, unknown> }) {
-        if (event.type === 'jobRegistered') {
+        if (event.type === QUEUE_EVENTS.JOB_REGISTERED) {
             const job = await this.#getJob(event.payload.id as string);
             if (!job) {
                 this.#logger.error(`Job not found`, event);
@@ -52,7 +53,7 @@ export default class JobNameLength {
             }
         }
 
-        if (event.type === 'jobSuccessed') {
+        if (event.type === QUEUE_EVENTS.JOB_COMPLETED) {
             const job = await this.#getJob(event.payload.id as string);
             if (!job) {
                 this.#logger.error(`Job not found`, event);
@@ -65,7 +66,7 @@ export default class JobNameLength {
             }
         }
 
-        this.#outbox.add('statisticCalculated', {
+        this.#outbox.add(QUEUE_EVENTS.STATISTIC_CALCULATED, {
             id: this.constructor.name,
             pattern: `Job name length > ${this.#desiredNameLength}`,
             matchCount: this.#matchCount,

@@ -1,6 +1,7 @@
 import http, { IncomingMessage, ServerResponse } from "http";
 import container from './container.ts'
 import requestListener from './http/requestListener.ts'
+import setupSubscription from "./setupSubscriptions.ts";
 
 process.on('unhandledRejection', err => {
     console.error(err);
@@ -25,40 +26,7 @@ statisticConsumer.run().catch(consoleLogger.error);
 averageTimeExecution.run().catch(consoleLogger.error);
 averageTimeExecutionOutbox.run().catch(consoleLogger.error);
 
-queue.on('jobRetried', (payload) => {
-    jobInbox.add('jobRetried', payload);
-})
-
-queue.on('jobCrashed', (payload) => {
-    jobInbox.add('jobCrashed', payload);
-})
-
-queue.on('jobRegistered', (payload) => {
-    jobProcessorInbox.add('jobRegistered', payload);
-    firstLetterXInbox.add('jobRegistered', payload);
-    statisticInbox.add('jobRegistered', payload);
-    jobNameLengthInbox.add('jobRegistered', payload);
-    argumentsCountInbox.add('jobRegistered', payload);
-    averageTimeExecutionInbox.add('jobRegistered', payload);
-});
-
-queue.on('jobSuccessed', (payload) => {
-    jobInbox.add('jobSuccessed', payload);
-    firstLetterXInbox.add('jobSuccessed', payload);
-    statisticInbox.add('jobSuccessed', payload);
-    jobNameLengthInbox.add('jobSuccessed', payload);
-    argumentsCountInbox.add('jobSuccessed', payload);
-    averageTimeExecutionInbox.add('jobSuccessed', payload);
-});
-queue.on('jobFailed', (payload) => {
-    jobInbox.add('jobFailed', payload);
-    statisticInbox.add('jobFailed', payload);
-    averageTimeExecutionInbox.add('jobFailed', payload);
-});
-
-queue.on('statisticCalculated', (payload) => {
-    statisticInbox.add('statisticCalculated', payload);
-});
+setupSubscription(container)
 
 const host = '127.0.0.1';
 const port = 8000;

@@ -2,7 +2,7 @@ import { v4 } from 'uuid'
 import { JobDTO } from './jodTypes';
 
 export enum JobStatus {
-    SUCCESS = 'succeed',
+    COMPLETED = 'completed',
     FAILED = 'failed',
     CRASHED = 'crashed',
     RETRIED = 'retried',

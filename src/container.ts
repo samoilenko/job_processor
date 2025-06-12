@@ -22,6 +22,8 @@ import JobNameLength from '../packages/statistic/infrastructure/workers/JobNameL
 import ArgumentsCount from '../packages/statistic/infrastructure/workers/ArgumentsCount.ts';
 import AverageTimeExecution from '../packages/statistic/infrastructure/workers/AverageTimeExecution.ts';
 
+import { QUEUE_EVENTS } from './setupSubscriptions.ts';
+
 const queue = new EventEmitter();
 
 const consoleLogger = new ConsoleLogger();
@@ -46,6 +48,7 @@ const jobProcessor = new JobProcessor({
     jobService: new JobProcessorService(jobService),
     logger: consoleLogger,
     runner: jobRunner,
+    eventNames: QUEUE_EVENTS,
 });
 
 const firstLetterOutbox = new StatisticOutbox(queue, consoleLogger);
