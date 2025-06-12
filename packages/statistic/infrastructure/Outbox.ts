@@ -37,7 +37,7 @@ export default class Outbox {
     async run() {
         for await (const event of this.getEvent()) {
             if (!this.#queue.emit(event.type, event.payload)) {
-                this.#logger.error(`Event ${event.type} doesn't have subscribers`);
+                this.#logger.error(`${this.constructor.name}:\t Event ${event.type} doesn't have subscribers`);
             }
         }
     }

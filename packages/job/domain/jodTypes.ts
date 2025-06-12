@@ -2,6 +2,7 @@ import Job from "./Job"
 
 export interface IJobLogger {
     error(...args: unknown[]): void
+    debug(...args: unknown[]): void
 }
 
 export interface IJobOutBox {

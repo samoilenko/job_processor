@@ -86,7 +86,7 @@ export default class JobProcessor {
         // one call is required, others are retries
         for (let i = 0; i <= this.#maxRetries; i++) {
             const attemptStartTime = Date.now();
-            this.#logger.info(`Job ${jobId}, attempt ${i + 1}`);
+            this.#logger.info(`${this.constructor.name}:\t Job ${jobId}, attempt ${i + 1}`);
 
             this.#addToOutbox(this.#eventNames.JOB_RUNNING, { id: job.id });
             const response = await this.#runJob(job);
@@ -103,7 +103,7 @@ export default class JobProcessor {
                 this.#addToOutbox(this.#eventNames.JOB_CRASHED, { id: job.id, executionTime: Date.now() - startTime });
             } else {
                 this.#addToOutbox(this.#eventNames.JOB_RETRIED, { id: job.id, executionTime: Date.now() - attemptStartTime });
-                this.#logger.debug(`Wait a bit (${this.#retryDelay} ms) before trying one more time...`);
+                this.#logger.debug(`${this.constructor.name}:\t job \t${jobId} crushed. Wait a bit (${this.#retryDelay} ms) before trying one more time...`);
                 await setTimeout(this.#retryDelay);
             }
         }
@@ -119,7 +119,7 @@ export default class JobProcessor {
             }
 
             if (response !== STATUS_CRASHED) {
-                this.#logger.error(`unexpected status: ${response}`, job);
+                this.#logger.error(`${this.constructor.name}:\t unexpected status: ${response}`, job);
             }
 
             return STATUS_CRASHED;
@@ -131,7 +131,7 @@ export default class JobProcessor {
 
     #addToOutbox(name: string, payload: { id: string, executionTime?: number }) {
         if (!this.#outbox.add(name, payload)) {
-            this.#logger.error(`${name} has no subscribers`);
+            this.#logger.error(`${this.constructor.name}:\t ${name} has no subscribers`);
         }
     }
 }

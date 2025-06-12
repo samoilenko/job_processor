@@ -50,6 +50,7 @@ export default class Consumer {
             throw new Error(`${event.type} doesn't have job id`);
         }
 
+        this.#logger.debug(`${this.constructor.name}:\t get event \t${event.type}\t for the job \t${jobId}`);
         const newStatus = getJobStatusByEventType(event.type)
         await this.#jobService.changeStatus(jobId, newStatus);
     }

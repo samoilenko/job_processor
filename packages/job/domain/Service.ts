@@ -26,8 +26,9 @@ export default class JobService {
 
             await this.#repository.save(job);
             await this.#outbox.add("jobRegistered", { id: job.id, status: job.status });
+            this.#logger.debug(`${this.constructor.name}:\t job ${job.id} created`);
         } catch (e) {
-            this.#logger.error(`Can't register job ${jobVO.name}`);
+            this.#logger.error(`${this.constructor.name}:\t Can't register job ${jobVO.name}`);
             throw e;
         }
     }
