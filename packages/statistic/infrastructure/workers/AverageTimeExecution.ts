@@ -6,6 +6,9 @@ import Outbox from "../Outbox";
 import { QUEUE_EVENTS } from '../config';
 
 const calculateAverageTimeExecution = (timeExecution: number, count: number): number => {
+    if (!count)
+        return 0;
+
     return Math.round(timeExecution / count);
 }
 
@@ -43,22 +46,23 @@ export default class AverageTimeExecution {
 
     async #handle(event: { type: string, payload: Record<string, unknown> & Metadata }) {
         const correlationId = event.payload.metadata?.correlationId;
-        if (event.type === QUEUE_EVENTS.JOB_REGISTERED) {
-            const job = await this.#getJob(event.payload.id as string, { correlationId });
-            if (!job) {
-                this.#logger.error(`${this.constructor.name}:\t Job not found`, event, { correlationId });
-                return;
-            }
+        if (event.type !== QUEUE_EVENTS.JOB_REGISTERED &&
+            event.type !== QUEUE_EVENTS.JOB_COMPLETED &&
+            event.type !== QUEUE_EVENTS.JOB_FAILED) {
+            return;
+        }
+
+        const job = await this.#getJob(event.payload.id as string, { correlationId });
+        if (!job) {
+            this.#logger.error(`${this.constructor.name}:\t Job not found`, event, { correlationId });
+            return;
+        }
+
+        if (event.type == QUEUE_EVENTS.JOB_REGISTERED) {
             this.#totalJobs++
         }
 
         if (event.type === QUEUE_EVENTS.JOB_COMPLETED) {
-            const job = await this.#getJob(event.payload.id as string, { correlationId });
-            if (!job) {
-                this.#logger.error(`${this.constructor.name}:\t Job not found`, event, { correlationId });
-                return;
-            }
-
             const executionTime: number | undefined = event.payload.executionTime as number | undefined;
             if (executionTime === undefined) {
                 this.#logger.error(`${this.constructor.name}:\t Event doesn't have execution time`, event, { correlationId });
@@ -70,11 +74,6 @@ export default class AverageTimeExecution {
         }
 
         if (event.type === QUEUE_EVENTS.JOB_FAILED) {
-            const job = await this.#getJob(event.payload.id as string, { correlationId });
-            if (!job) {
-                this.#logger.error(`${this.constructor.name}:\t Job not found`, event, { correlationId });
-                return;
-            }
             const executionTime: number | undefined = event.payload.executionTime as number | undefined;
             if (executionTime === undefined) {
                 this.#logger.error(`${this.constructor.name}:\t Event doesn't have execution time`, event, { correlationId });
@@ -86,7 +85,7 @@ export default class AverageTimeExecution {
         }
 
         const successAverageTime = calculateAverageTimeExecution(this.#successTotalExecutionTime, this.#succeed);
-        const failedAverageTime = calculateAverageTimeExecution(this.#failedTotalExecutionTime, this.#succeed);
+        const failedAverageTime = calculateAverageTimeExecution(this.#failedTotalExecutionTime, this.#failed);
         this.#outbox.add(QUEUE_EVENTS.STATISTIC_CALCULATED, {
             id: this.constructor.name,
             pattern: 'Average time execution',
