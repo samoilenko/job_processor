@@ -147,10 +147,8 @@ export default class JobProcessor {
         const correlationId = metadata?.correlationId;
         try {
             const response = await this.#runner.run(job.name, job.args, { correlationId });
-            if (response === 0) {
-                return STATUS_SUCCESS;
-            } else if (response === 1) {
-                return STATUS_FAILED;
+            if (response === STATUS_SUCCESS || response === STATUS_FAILED) {
+                return response;
             }
 
             if (response !== STATUS_CRASHED) {
