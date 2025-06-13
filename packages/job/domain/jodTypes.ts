@@ -26,3 +26,7 @@ export type JobDTO = {
     arguments: string[];
     status: string;
 }
+
+export type Metadata = {
+    correlationId?: string;
+}

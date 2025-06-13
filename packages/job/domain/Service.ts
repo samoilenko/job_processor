@@ -1,7 +1,7 @@
 import Job, { JobStatus } from "./Job.ts";
 import jobVO from "./JobValueObject.ts";
 import JobRepository from "./Repository.ts";
-import { IJobLogger, IJobOutBox, JobDTO } from "./jodTypes.ts";
+import { IJobLogger, IJobOutBox, JobDTO, Metadata } from "./jodTypes.ts";
 
 const isValidStatus = (status: unknown): boolean => typeof status === 'string' &&
     (Object.values(JobStatus) as string[]).includes(status);
@@ -17,7 +17,8 @@ export default class JobService {
         this.#outbox = params.outbox;
     }
 
-    async create(payload: jobVO) {
+    async create(payload: jobVO, metadata: Metadata = {}) {
+        const correlationId = metadata.correlationId;
         try {
             const job = new Job();
             job.name = payload.name;
@@ -25,10 +26,16 @@ export default class JobService {
             job.queued();
 
             await this.#repository.save(job);
-            await this.#outbox.add("jobRegistered", { id: job.id, status: job.status });
-            this.#logger.debug(`${this.constructor.name}:\t job ${job.id} created`);
+            await this.#outbox.add("jobRegistered", {
+                id: job.id,
+                status: job.status,
+                metadata: {
+                    correlationId,
+                }
+            });
+            this.#logger.debug(`${this.constructor.name}:\t job ${job.id} created.`, { correlationId });
         } catch (e) {
-            this.#logger.error(`${this.constructor.name}:\t Can't register job ${jobVO.name}`);
+            this.#logger.error(`${this.constructor.name}:\t Can't register job ${jobVO.name}.`, { correlationId });
             throw e;
         }
     }

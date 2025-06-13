@@ -5,7 +5,7 @@ export interface IJobProcessorLogger {
 }
 
 export interface IJobRunner {
-    run(jobName: string, args: string[]): Promise<number>
+    run(jobName: string, args: string[], metadata: Metadata['metadata']): Promise<number>
 }
 
 export type Job = {
@@ -22,3 +22,8 @@ export interface IOutBox {
     add(type: string, payload: Record<string, unknown>)
 }
 
+export type Metadata = {
+    metadata?: {
+        correlationId?: string;
+    }
+}

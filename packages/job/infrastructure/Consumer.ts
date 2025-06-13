@@ -1,5 +1,5 @@
 import Semaphore from "../../utils/Semaphore";
-import { IJobInBox, IJobLogger } from "../domain/jodTypes";
+import { IJobInBox, IJobLogger, Metadata } from "../domain/jodTypes";
 import JobService from "../domain/Service";
 import { JobStatus } from "../domain/Job";
 import { QUEUE_EVENTS } from './config'
@@ -44,13 +44,14 @@ export default class Consumer {
         }
     }
 
-    async #handleJob(event) {
+    async #handleJob(event: { type: string, payload: Record<string, unknown> & { metadata?: Metadata } }) {
+        const correlationId = event.payload.metadata?.correlationId;
         const jobId = event.payload.id as string;
         if (!jobId) {
             throw new Error(`${event.type} doesn't have job id`);
         }
 
-        this.#logger.debug(`${this.constructor.name}:\t get event \t${event.type}\t for the job \t${jobId}`);
+        this.#logger.debug(`${this.constructor.name}:\t get event \t${event.type}\t for the job \t${jobId}`, { correlationId });
         const newStatus = getJobStatusByEventType(event.type)
         await this.#jobService.changeStatus(jobId, newStatus);
     }

@@ -27,6 +27,12 @@ type JobProcessorParams = {
     eventNames: JobProcessorEvents,
 }
 
+type Metadata = {
+    metadata?: {
+        correlationId?: string
+    }
+}
+
 const getSupportedEvents = (events: Record<string, string>): JobProcessorEvents => {
     const requiredEvens = ['JOB_RETRIED', 'JOB_CRASHED', 'JOB_COMPLETED', 'JOB_FAILED', 'JOB_RUNNING'];
     for (const eventName of requiredEvens) {
@@ -70,7 +76,8 @@ export default class JobProcessor {
         }
     }
 
-    async #handleJob(event: { type: string, payload: Record<string, unknown> }) {
+    async #handleJob(event: { type: string, payload: Record<string, unknown> & Metadata }) {
+        const correlationId = event.payload.metadata?.correlationId;
         const jobId = event.payload.id as string;
         if (!jobId) {
             throw new Error(`event ${event.type} doesn't have id`);
@@ -86,32 +93,60 @@ export default class JobProcessor {
         // one call is required, others are retries
         for (let i = 0; i <= this.#maxRetries; i++) {
             const attemptStartTime = Date.now();
-            this.#logger.info(`${this.constructor.name}:\t Job ${jobId}, attempt ${i + 1}`);
+            this.#logger.info(`${this.constructor.name}:\t Job ${jobId}, attempt ${i + 1}`, { correlationId });
 
-            this.#addToOutbox(this.#eventNames.JOB_RUNNING, { id: job.id });
-            const response = await this.#runJob(job);
+            this.#addToOutbox(this.#eventNames.JOB_RUNNING, { id: job.id, metadata: { correlationId } });
+            const response = await this.#runJob(job, { correlationId });
             const executionTime = Date.now() - attemptStartTime;
             if (response == STATUS_SUCCESS) {
-                this.#addToOutbox(this.#eventNames.JOB_COMPLETED, { id: job.id, executionTime });
+                this.#addToOutbox(this.#eventNames.JOB_COMPLETED, {
+                    id: job.id,
+                    executionTime,
+                    metadata: {
+                        correlationId,
+                    },
+                });
                 return;
             } else if (response === STATUS_FAILED) {
-                this.#addToOutbox(this.#eventNames.JOB_FAILED, { id: job.id, executionTime });
+                this.#addToOutbox(this.#eventNames.JOB_FAILED, {
+                    id: job.id,
+                    executionTime,
+                    metadata: {
+                        correlationId,
+                    },
+                });
                 return;
             }
 
             if (i == this.#maxRetries) {
-                this.#addToOutbox(this.#eventNames.JOB_CRASHED, { id: job.id, executionTime: Date.now() - startTime });
+                this.#addToOutbox(this.#eventNames.JOB_CRASHED, {
+                    id: job.id,
+                    executionTime: Date.now() - startTime,
+                    metadata: {
+                        correlationId,
+                    }
+                });
             } else {
-                this.#addToOutbox(this.#eventNames.JOB_RETRIED, { id: job.id, executionTime: Date.now() - attemptStartTime });
-                this.#logger.debug(`${this.constructor.name}:\t job \t${jobId} crushed. Wait a bit (${this.#retryDelay} ms) before trying one more time...`);
+                this.#addToOutbox(this.#eventNames.JOB_RETRIED, {
+                    id: job.id,
+                    executionTime: Date.now() - attemptStartTime,
+                    metadata: {
+                        correlationId,
+                    }
+                });
+                this.#logger.debug(
+                    `${this.constructor.name}:\t job \t${jobId} crushed. Wait a bit (${this.#retryDelay} ms) before trying one more time...`,
+                    { correlationId }
+                );
                 await setTimeout(this.#retryDelay);
             }
         }
     }
 
-    async #runJob(job: Job): Promise<Statuses> {
+    async #runJob(job: Job, metadata: Metadata['metadata']): Promise<Statuses> {
+        const correlationId = metadata?.correlationId;
         try {
-            const response = await this.#runner.run(job.name, job.args);
+            const response = await this.#runner.run(job.name, job.args, { correlationId });
             if (response === 0) {
                 return STATUS_SUCCESS;
             } else if (response === 1) {
@@ -119,7 +154,7 @@ export default class JobProcessor {
             }
 
             if (response !== STATUS_CRASHED) {
-                this.#logger.error(`${this.constructor.name}:\t unexpected status: ${response}`, job);
+                this.#logger.error(`${this.constructor.name}:\t unexpected status: ${response}`, job, { correlationId });
             }
 
             return STATUS_CRASHED;
@@ -129,9 +164,10 @@ export default class JobProcessor {
         }
     }
 
-    #addToOutbox(name: string, payload: { id: string, executionTime?: number }) {
+    #addToOutbox(name: string, payload: { id: string, executionTime?: number } & Metadata) {
+        const corelationId = payload.metadata?.correlationId;
         if (!this.#outbox.add(name, payload)) {
-            this.#logger.error(`${this.constructor.name}:\t ${name} has no subscribers`);
+            this.#logger.error(`${this.constructor.name}:\t ${name} has no subscribers`, { corelationId });
         }
     }
 }

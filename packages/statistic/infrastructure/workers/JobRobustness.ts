@@ -1,4 +1,4 @@
-import { IStatisticLogger } from "../../domain/statisticTypes";
+import { IStatisticLogger, Metadata } from "../../domain/statisticTypes";
 import JobService from "../../../job/domain/Service";
 import Inbox from "../Inbox";
 import Semaphore from "../../../utils/Semaphore"
@@ -35,15 +35,16 @@ export default class JobRobustness {
         }
     }
 
-    async #handle(event: { type: string, payload: Record<string, unknown> }) {
+    async #handle(event: { type: string, payload: Record<string, unknown> & Metadata }) {
         if (event.type !== QUEUE_EVENTS.JOB_COMPLETED && event.type !== QUEUE_EVENTS.JOB_CRASHED && event.type !== QUEUE_EVENTS.JOB_FAILED) {
             return;
         }
-        this.#logger.debug(`${this.constructor.name}: \t get event ${event.type}`);
+        const correlationId = event.payload.metadata?.correlationId;
+        this.#logger.debug(`${this.constructor.name}: \t get event ${event.type}`, { correlationId });
 
-        const job = await this.#getJob(event.payload.id as string);
+        const job = await this.#getJob(event.payload.id as string, { correlationId });
         if (!job) {
-            this.#logger.error(`${this.constructor.name}:\t Job not found`, event);
+            this.#logger.error(`${this.constructor.name}:\t Job not found`, event, { correlationId });
             return;
         }
 
@@ -68,6 +69,9 @@ export default class JobRobustness {
             crashed: this.#crashedJobs,
             percent: `${percent}% of crashed`,
             status: this.#getStatus(percent),
+            metadata: {
+                correlationId,
+            }
         });
     }
 
@@ -95,15 +99,16 @@ export default class JobRobustness {
         return Math.round(percent * 100) / 100;
     }
 
-    async #getJob(jobId: string) {
+    async #getJob(jobId: string, metadata: Metadata['metadata']) {
+        const correlationId = metadata?.correlationId;
         if (!jobId) {
-            this.#logger.error(`${this.constructor.name}:\t Job id is empty`);
+            this.#logger.error(`${this.constructor.name}:\t Job id is empty`, { correlationId });
             return;
         }
 
         const job = this.#jobService.get(jobId);
         if (!job) {
-            this.#logger.error(`${this.constructor.name}:\t Job '${jobId} not found'`);
+            this.#logger.error(`${this.constructor.name}:\t Job '${jobId} not found'`, { correlationId });
             return;
         }
 

@@ -8,3 +8,9 @@ export type Pattern = {
     matchCount: number;
     successRate: number;
 }
+
+export type Metadata = {
+    metadata?: {
+        correlationId?: string;
+    }
+}

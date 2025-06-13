@@ -4,6 +4,7 @@ import ValidationError from "../../packages/job/domain/errors";
 import { isHTTPError } from "./httpErrors";
 import { type TContainer } from '../container'
 import JobValueObject from "../../packages/job/domain/JobValueObject.ts";
+import { randomUUID } from "crypto";
 
 const requestListener = (container: TContainer) => async (req: IncomingMessage, res: ServerResponse): Promise<void> => {
     const { jobService, consoleLogger, statisticService } = container;
@@ -15,7 +16,9 @@ const requestListener = (container: TContainer) => async (req: IncomingMessage, 
                         try {
                             const payload = await getParsedBody<{ name: string, args?: string[] }>(req, consoleLogger);
                             const jobVO = new JobValueObject(payload.name, payload.args);
-                            await jobService.create(jobVO);
+                            const correlationId = randomUUID().toString()
+                            consoleLogger.info(`Request is received to create a job.`, { correlationId });
+                            await jobService.create(jobVO, { correlationId });
                             res.writeHead(201);
                             res.end();
                         } catch (e: unknown) {

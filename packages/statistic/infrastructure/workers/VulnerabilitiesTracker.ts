@@ -1,4 +1,4 @@
-import { IStatisticLogger } from "../../domain/statisticTypes";
+import { IStatisticLogger, Metadata } from "../../domain/statisticTypes";
 import JobService from "../../../job/domain/Service";
 import Inbox from "../Inbox";
 import Semaphore from "../../../utils/Semaphore"
@@ -36,17 +36,18 @@ export default class VulnerabilitiesTracker {
         }
     }
 
-    async #handle(event: { type: string, payload: Record<string, unknown> }) {
+    async #handle(event: { type: string, payload: Record<string, unknown> & Metadata }) {
         if (event.type !== QUEUE_EVENTS.JOB_REGISTERED) {
             return;
         }
+        const correlationId = event.payload.metadata?.correlationId;
 
-        const job = await this.#getJob(event.payload.id as string);
+        const job = await this.#getJob(event.payload.id as string, { correlationId });
         if (!job) {
-            this.#logger.error(`${this.constructor.name}:\t Job not found`, event);
+            this.#logger.error(`${this.constructor.name}:\t Job not found`, event, { correlationId });
             return;
         }
-        this.#logger.debug(`${this.constructor.name}:\t get an event \t ${event.type} jobId: \t ${job.id}`);
+        this.#logger.debug(`${this.constructor.name}:\t get an event \t ${event.type} jobId: \t ${job.id}`, { correlationId });
         this.#totalJobs++
         if (meetsCriteria(job.arguments)) {
             this.#jobsWithVulnerabilities++
@@ -57,18 +58,22 @@ export default class VulnerabilitiesTracker {
             pattern: 'Jobs with vulnerabilities',
             totalCount: this.#totalJobs,
             withVulnerabilities: this.#jobsWithVulnerabilities,
+            metadata: {
+                correlationId,
+            },
         });
     }
 
-    async #getJob(jobId: string) {
+    async #getJob(jobId: string, metadata: Metadata['metadata']) {
+        const correlationId = metadata?.correlationId;
         if (!jobId) {
-            this.#logger.error(`${this.constructor.name}:\t Job id is empty`);
+            this.#logger.error(`${this.constructor.name}:\t Job id is empty`, { correlationId });
             return;
         }
 
         const job = this.#jobService.get(jobId);
         if (!job) {
-            this.#logger.error(`${this.constructor.name}:\t Job '${jobId} not found'`);
+            this.#logger.error(`${this.constructor.name}:\t Job '${jobId} not found'`, { correlationId });
             return;
         }
 
